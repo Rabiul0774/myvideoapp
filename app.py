@@ -706,23 +706,22 @@ def run_editor_agent(
         # Stitch clips together
         final_master_clip = concatenate_videoclips(loaded_clips, method="compose")
 
-        # Attach audio track
+                # Attach audio track
         if audio_path and os.path.exists(audio_path):
             try:
                 audio_clip = AudioFileClip(audio_path)
-                # Trim or match audio duration to video duration
-                if hasattr(audio_clip, "with_duration"):
-                    audio_clip = audio_clip.with_duration(final_master_clip.duration)
-                else:
-                    audio_clip = audio_clip.set_duration(final_master_clip.duration)
-
-                if hasattr(final_master_clip, "with_audio"):
-                    final_master_clip = final_master_clip.with_audio(audio_clip)
-                else:
-                    final_master_clip = final_master_clip.set_audio(audio_clip)
-                log_event("Editor_Agent", "SUCCESS", f"Audio track synchronized to video duration ({final_master_clip.duration:.1f}s).")
+                
+                # Safely match durations to prevent MoviePy EOF crashes
+                final_dur = min(final_master_clip.duration, audio_clip.duration)
+                final_master_clip = final_master_clip.subclip(0, final_dur)
+                audio_clip = audio_clip.subclip(0, final_dur)
+                
+                final_master_clip = final_master_clip.set_audio(audio_clip)
+                
+                log_event("Editor_Agent", "SUCCESS", f"Audio synchronized ({final_master_clip.duration:.1f}s).")
             except Exception as a_err:
                 log_event("Editor_Agent", "WARN", f"Audio alignment warning: {a_err}")
+
 
         # Render output MP4
         final_master_clip.write_videofile(
