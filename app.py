@@ -41,7 +41,6 @@ st.set_page_config(
 # ==============================================================================
 TESTING_API_KEY = st.secrets["GEMINI_API_KEY"]
 
-"
 API_KEY = os.environ.get("GEMINI_API_KEY", TESTING_API_KEY)
 os.environ["GEMINI_API_KEY"] = API_KEY
 
